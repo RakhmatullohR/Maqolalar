@@ -41,23 +41,27 @@ Endi esa, yuqoridagi kodning `fetch()` bilan yozilgan versiyasini ko'rib chiqami
 ```javascript
 // fetch()
 
-const url = "https://jsonplaceholder.typicode.com/todos";
-const options = {
-  method: "POST",
-  headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json;charset=UTF-8",
-  },
-  body: JSON.stringify({
-    a: 10,
-    b: 20,
-  }),
-};
-fetch(url, options)
-  .then((response) => response.json())
-  .then((data) => {
-    console.log(data);
-  });
+  const url = 'https://jsonplaceholder.typicode.com/posts';
+  const data = {
+    userId: 1,
+    title: 'Any Title',
+    description: 'Some Description',
+  };
+  const options = {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json;charset=UTF-8',
+    },
+    body: JSON.stringify(data),
+  };
+  fetch(url, options)
+    .then((response) => {
+      return response.json();
+    })
+    .then((data) => {
+      console.log(data);
+    });
 ```
 
 #### Diqqat qiling:
