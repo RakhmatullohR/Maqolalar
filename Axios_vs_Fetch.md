@@ -1,5 +1,7 @@
 _English version:_ https://blog.logrocket.com/axios-vs-fetch-best-http-requests/
 
+## Is Axios better than fetch()?
+
 Men yaqinda “Axios bilan HTTP so'rovlarini professional darajada qanday qilish mumkin” nomli maqolamda Axios kutubxonasidan foydalanishning afzalliklarini muhokama qildim. Shunga qaramasdan, ba'zi holatlarda Axios ideal yechim bo‘lmasligi va HTTP so'rovlarini amalga oshirish uchun undan ham yaxshi variantlar mavjudligini tan olish muhimdir.
 
 Ba'zi dasturchilar Axios'ni ichki API'larga nisbatan qulayroq deb hisoblashadi, ammo ko‘pchilik bunday kutubxonaga ehtiyojni ortiqcha baholaydi. Aslida, `fetch()` API'si Axios’ning asosiy xususiyatlarini takrorlashga qodir va u zamonaviy brauzerlarda tayyor holatda mavjud bo‘lish afzalligiga ega.
