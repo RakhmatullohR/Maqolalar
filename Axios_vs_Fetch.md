@@ -150,7 +150,8 @@ Quyidagi misollarda Axios va fetch()ning JSON formatiga o‘girishdagi farqini k
 axios.get('https://api.github.com/orgs/axios')
   .then(response => {
     console.log(response.data);
-  }, error => {
+  })
+  .catch(error => {
     console.log(error);
   });
 ```
