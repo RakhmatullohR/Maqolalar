@@ -17,10 +17,6 @@ Quyida qanday qilib Axios yordamida URL manzilga maxsus sarlavhalar (headers) bi
 
 ```javascript
 // axios
-import { memo } from 'react';
-import axios from 'axios';
-
-export default memo(function TestApp() {
   const url = 'https://jsonplaceholder.typicode.com/posts';
   const data = {
     userId: 1,
@@ -33,20 +29,9 @@ export default memo(function TestApp() {
       'Content-Type': 'application/json;charset=UTF-8',
     },
   };
-  const httpRequest = () => {
-    axios.post(url, data, options).then(({ data }) => {
-      console.log('axios: ', data);
-    });
-  };
-  return (
-    <button
-      style={{ padding: '5px 15px', margin: '15px' }}
-      onClick={httpRequest}
-    >
-      Action
-    </button>
-  );
-});
+  axios.post(url, data, options).then(({ data }) => {
+    console.log('axios: ', data);
+  });
 ```
 
 Endi esa, yuqoridagi kodning `fetch()` bilan yozilgan versiyasini ko'rib chiqamiz, bu ham xuddi shu natijani beradi:
