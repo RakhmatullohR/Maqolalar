@@ -40,7 +40,6 @@ Endi esa, yuqoridagi kodning `fetch()` bilan yozilgan versiyasini ko'rib chiqami
 
 ```javascript
 // fetch()
-
   const url = 'https://jsonplaceholder.typicode.com/posts';
   const data = {
     userId: 1,
@@ -86,12 +85,39 @@ Agar faqat orqaga moslikni ta'minlash uchun Axios'ni ishlatayotgan bo'lsangiz, u
 ```bash
 npm install whatwg-fetch --save
 ```
+```bash
+yarn add whatwg-fetch
+```
 
 Keyin, shunday qilib so'rovlar qilishingiz mumkin:
 
 ```javascript
 import 'whatwg-fetch';
 window.fetch(...)
+```
+yoki toliqroq shakilda yozsak
+```javascript
+  const url = 'https://jsonplaceholder.typicode.com/posts';
+  const data = {
+    userId: 1,
+    title: 'Any Title',
+    description: 'Some Description',
+  };
+  const options = {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json;charset=UTF-8',
+    },
+    body: JSON.stringify(data),
+  };
+  window.fetch(url, options)
+    .then((response) => {
+      return response.json();
+    })
+    .then((data) => {
+      console.log(data);
+    });
 ```
 
 E'tibor bering, ba'zi eski brauzerlarda `fetch()` bilan ishlash uchun `promise` polyfill ham kerak bo'lishi mumkin.
