@@ -17,21 +17,35 @@ Quyida qanday qilib Axios yordamida URL manzilga maxsus sarlavhalar (headers) bi
 
 ```javascript
 // axios
+import { memo } from 'react';
+import axios from 'axios';
 
-const url = 'https://jsonplaceholder.typicode.com/posts'
-const data = {
-  a: 10,
-  b: 20,
-};
-axios
-  .post(url, data, {
+export default memo(function TestApp() {
+  const url = 'https://jsonplaceholder.typicode.com/posts';
+  const data = {
+    userId: 1,
+    title: 'Any Title',
+    description: 'Some Description',
+  };
+  const options = {
     headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json;charset=UTF-8",
+      Accept: 'application/json',
+      'Content-Type': 'application/json;charset=UTF-8',
     },
-  })
-  .then(({data}) => {
-    console.log(data);
+  };
+  const httpRequest = () => {
+    axios.post(url, data, options).then(({ data }) => {
+      console.log('axios: ', data);
+    });
+  };
+  return (
+    <button
+      style={{ padding: '5px 15px', margin: '15px' }}
+      onClick={httpRequest}
+    >
+      Action
+    </button>
+  );
 });
 ```
 
