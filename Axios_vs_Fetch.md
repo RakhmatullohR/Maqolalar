@@ -253,6 +253,54 @@ axios.get('https://api.github.com/users/sideshowbarker')
     console.log(response.data);
   });
 ```
+Yoki, error.code === 'ECONNABORTED' bo'lsa, timiout'ni oshirib so'rovni qayta yuborish misolida ko'rsak bo'ladi
+```javascript
+const url = 'https://jsonplaceholder.typicode.com/posts';
+const data = {
+  userId: 1,
+  title: 'Any Title',
+  description: 'Some Description',
+};
+const options = {
+  timeout: 100,
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json;charset=UTF-8',
+  },
+};
+
+// Javob interceptor'ini yaratish
+axios.interceptors.response.use(
+  (response) => {
+    // Muvaffaqiyatli javob qaytsa uni qaytaradi
+    return response;
+  },
+  (error) => {
+    // Agar status 0 bo'lsa, bu timeout bo'lishi mumkin
+    if (error.code === 'ECONNABORTED' || error.response?.status === 0) {
+      console.log('Timeout yuz berdi, qayta yuborilyapti...');
+      // Timeoutni 1000 qilib so'rovni qayta yuboramiz
+      const newConfig = {
+        ...error.config, // eski konfiguratsiyani olamiz
+        timeout: 1000,   // timeoutni oshiramiz
+      };
+      return axios(newConfig); // so'rovni qayta yuborish
+    }
+    // Agar boshqa turdagi xatolik bo'lsa, uni qaytaradi
+    return Promise.reject(error);
+  }
+);
+
+// Asl POST so'rovni yuborish
+axios
+  .post(url, data, options)
+  .then((response) => {
+    console.log(response);
+  })
+  .catch((err) => {
+    console.log('Xato:', err.message);
+  });
+```
 
 Bu yerda `axios.interceptors.request.use()` metodi HTTP so'rov yuborilishidan oldin bajarilishi kerak bo‘lgan kodni aniqlaydi. Shuningdek, `axios.interceptors.response.use()` yordamida serverdan keladigan javobni intercept qilish mumkin. Masalan, tarmoqda xatolik yuz bersa, bu orqali so‘rovni qayta urinish mumkin.
 
