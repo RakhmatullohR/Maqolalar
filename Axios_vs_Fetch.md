@@ -131,17 +131,27 @@ Axios’da so'rovning kutish vaqtini o‘rnatish juda sodda, bu ayrim dasturchil
 Quyidagi misolda so'rovning kutish vaqti 4 soniya qilib o‘rnatilgan:
 
 ```javascript
-axios({
-  method: 'post',
-  url: '/login',
-  timeout: 4000,    // 4 soniya kutish vaqti
-  data: {
-    firstName: 'David',
-    lastName: 'Pollock'
-  }
-})
-.then(response => {/* javobni qayta ishlash */}
-.catch(error => console.error('kutish vaqti oshib ketdi'));
+  const url = 'https://jsonplaceholder.typicode.com/posts';
+  const data = {
+    userId: 1,
+    title: 'Any Title',
+    description: 'Some Description',
+  };
+  const options = {
+    timeout: 4, // 4ms kutish vaqti
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json;charset=UTF-8',
+    },
+  };
+  axios
+    .post(url, data, options)
+    .then((response) => {
+      console.log(response);
+    })
+    .catch((err) => {
+      console.log(err.message); // timeout of 4ms exceeded
+    });
 ```
 
 #### Fetch() da so'rov vaqtini belgilash
@@ -149,21 +159,38 @@ axios({
 `fetch()`da shunga o'xshash funksionallik `AbortController` interfeysi yordamida amalga oshiriladi. Ammo bu biroz murakkabroq:
 
 ```javascript
-const controller = new AbortController();
-const options = {
-  method: 'POST',
-  signal: controller.signal,
-  body: JSON.stringify({
-    firstName: 'David',
-    lastName: 'Pollock'
-  })
-};  
-const promise = fetch('/login', options);
-const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-promise
-  .then(response => {/* javobni qayta ishlash */})
-  .catch(error => console.error('kutish vaqti oshib ketdi'));
+  const controller = new AbortController();
+  const url = 'https://jsonplaceholder.typicode.com/posts';
+  const data = {
+    userId: 1,
+    title: 'Any Title',
+    description: 'Some Description',
+  };
+  const options = {
+    method: 'POST',
+    signal: controller.signal,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json;charset=UTF-8',
+    },
+    body: JSON.stringify(data),
+  };
+  const promise = fetch(url, options);
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 4); // 4ms kutish vaqti
+  promise
+    .then((response) => {
+      clearTimeout(timeoutId);
+      return response.json();
+    })
+    .then((data) => {
+      console.log(data);
+    })
+    .catch((err) => {
+      clearTimeout(timeoutId);
+      console.log(err.message || 'kutish vaqti oshib ketdi');
+    });
 ```
 
 Bu yerda biz `AbortController` obyektini `AbortController.abort()` konstruktoridan foydalanib yaratdik, bu esa so‘rovni keyinchalik to'xtatishga imkon beradi. `signal` — `AbortController`ning faqat o‘qish uchun mo'ljallangan xususiyati bo‘lib, so‘rov bilan aloqada bo‘lish yoki uni bekor qilish imkoniyatini beradi. Agar server 4 soniyadan kamroq vaqt ichida javob bermasa, `controller.abort()` chaqiriladi va operatsiya to‘xtatiladi.
