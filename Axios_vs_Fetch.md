@@ -228,6 +228,8 @@ Bu yerda Axios avtomatik ravishda serverdan qaytgan ma'lumotlarni JavaScript oby
 
 Avtomatik ma'lumot transformatsiyasi juda foydali xususiyatdir, lekin `fetch()` yordamida buni qo‘lda amalga oshirish mumkin, shuning uchun bu unchalik katta cheklov emas.
 
+_Transformatsiya mexanizmlarini_ (transformRequest va transformResponse larni)  ko'rib chiqing!
+
 ### HTTP Interceptor'lar
 
 Axios'ning asosiy afzalliklaridan biri uning HTTP so‘rovlarni ushlab qolish (intercept) qobiliyatidir. HTTP interceptor'lar HTTP so‘rovlarini tahlil qilish yoki o‘zgartirish kerak bo‘lgan holatlarda juda foydali, masalan, loglash, autentifikatsiya, yoki muvaffaqiyatsiz so‘rovlarni qayta yuborish uchun ishlatiladi.
