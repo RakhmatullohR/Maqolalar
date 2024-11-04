@@ -407,68 +407,92 @@ Yirik fayllarni yuklashda yuklash jarayoni ko'rsatkichi (progress indicator) foy
 
 Quyidagi misol, `ReadableStream` yordamida foydalanuvchiga rasm yuklash jarayonida darhol ma'lumot berish uchun foydalanish usulini ko'rsatadi:
 
-#### HTML fayli (`index.html`)
-
-```html
-<div id="progress">progress</div>
-<img id="img">
-```
-
-#### JavaScript fayli (`script.js`)
-
 ```javascript
-'use strict'
-const element = document.getElementById('progress');
+import { memo, useRef, useEffect } from 'react';
+import 'whatwg-fetch';
 
-fetch('https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg')
-  .then(response => {
-    if (!response.ok) {
-      throw Error(response.status + ' ' + response.statusText);
-    }
-    if (!response.body) {
-      throw Error('ReadableStream not yet supported in this browser.');
-    }
-    const contentLength = response.headers.get('content-length');
-    if (!contentLength) {
-      throw Error('Content-Length response header unavailable');
-    }
-    const total = parseInt(contentLength, 10);
-    let loaded = 0;
-    return new Response(
-      new ReadableStream({
-        start(controller) {
-          const reader = response.body.getReader();
-          read();
-          function read() {
-            reader.read().then(({ done, value }) => {
-              if (done) {
-                controller.close();
-                return;
-              }
-              loaded += value.byteLength;
-              progress({ loaded, total });
-              controller.enqueue(value);
+// memo - Komponent faqatgina zarur bo'lganda qayta render qilinishini ta'minlaydi
+// useRef - DOM elementlariga to'g'ridan-to'g'ri murojaat qilish imkonini beradi
+// useEffect - Komponent yuklanganda bir marta ishlaydigan effekt funksiyasini belgilaydi
+
+export default memo(function TestFetch() {
+  const progressRef = useRef(null); // Yuklanish jarayonini ko'rsatish uchun div elementiga ishora
+  const imgRef = useRef(null);      // Yuklanadigan tasvirni ko'rsatish uchun img elementiga ishora
+
+  useEffect(() => {
+    // Tasvir yuklash uchun fetch funksiyasini chaqirish
+    fetch('https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg')
+      .then((response) => {
+        // Javob tekshirilyapti: muvaffaqiyatsiz bo'lsa xatolik tashlanadi
+        if (!response.ok) {
+          throw Error(response.status + ' ' + response.statusText);
+        }
+        // Agar 'ReadableStream' qo'llab-quvvatlanmasa, xatolik tashlanadi
+        if (!response.body) {
+// **ReadableStream**
+          throw Error('ReadableStream not yet supported in this browser.');
+        }
+        // Javob hajmini olish uchun `content-length` sarlavhasi tekshiriladi
+        const contentLength = response.headers.get('content-length');
+        if (!contentLength) {
+          throw Error('Content-Length response header unavailable');
+        }
+        const total = parseInt(contentLength, 10); // Umumiy yuklanish hajmi
+        let loaded = 0; // Yuklangan hajmni kuzatish uchun o'zgaruvchi
+
+        return new Response(
+          new ReadableStream({
+            start(controller) {
+              const reader = response.body.getReader();
               read();
-            }).catch(error => {
-              console.error(error);
-              controller.error(error);
-            });
-          }
+              function read() {
+                reader
+                  .read()
+                  .then(({ done, value }) => {
+                    if (done) {
+                      controller.close(); // Agar yuklash tugasa, oqim yopiladi
+                      return;
+                    }
+                    loaded += value.byteLength; // Har bir blok yuklanganda hajm yangilanadi
+                    progress({ loaded, total }); // Yuklanish foizini yangilash funksiyasi chaqiriladi
+                    controller.enqueue(value); // O'qilgan ma'lumotni oqimga qo'shish
+                    read(); // Navbatdagi blokni o'qish uchun rekursiv chaqirish
+                  })
+                  .catch((error) => {
+                    console.error(error); // Xatolik sodir bo'lsa, konsolga chiqariladi
+                    controller.error(error);
+                  });
+              }
+            },
+          })
+        );
+      })
+      .then((response) => response.blob()) // Tasvir blob formatiga o'giriladi
+      .then((data) => {
+        if (imgRef.current) {
+          // Yuklangan blob dan URL hosil qilinadi va img elementiga src qilib o'rnatiladi
+          imgRef.current.src = URL.createObjectURL(data);
         }
       })
-    );
-  })
-  .then(response => response.blob())
-  .then(data => {
-    document.getElementById('img').src = URL.createObjectURL(data);
-  })
-  .catch(error => {
-    console.error(error);
-  });
+      .catch((error) => {
+        console.error(error); // Xatolik bo'lsa, konsolga chiqariladi
+      });
 
-function progress({ loaded, total }) {
-  element.innerHTML = Math.round((loaded / total) * 100) + '%';
-}
+    // Yuklanish foizini hisoblab, progress elementida ko'rsatish funksiyasi
+    function progress({ loaded, total }) {
+      if (progressRef.current) {
+        progressRef.current.innerHTML = Math.round((loaded / total) * 100) + '%'; // Foizni hisoblash va div elementida ko'rsatish
+      }
+    }
+  }, []); // [] - bu effekt faqat komponent birinchi marta yuklanganda ishlaydi
+
+  return (
+    <>
+      <div ref={progressRef}>progress</div> {/* Yuklanish foizini ko'rsatadigan div */}
+      <img ref={imgRef} alt="Loaded content"></img> {/* Yuklangan tasvir */}
+    </>
+  );
+});
 ```
 
 Bu kod yuklash jarayonini kuzatib, progress indikatorni yangilab boradi.
