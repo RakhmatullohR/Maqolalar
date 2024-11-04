@@ -253,53 +253,55 @@ axios.get('https://api.github.com/users/sideshowbarker')
     console.log(response.data);
   });
 ```
-Yoki, error.code === 'ECONNABORTED' bo'lsa, timiout'ni oshirib so'rovni qayta yuborish misolida ko'rsak bo'ladi
+Yoki quidagi misolda **_axios.interceptors.request.use_** va **_axios.interceptors.response.use_**'ning qanday ishlashini yaqqol ko'rishingiz mumkin:
 ```javascript
+const axios = require('axios');
+
+const axiosInstance = axios.create({
+  timeout: 100, // 100 ms vaqt cheklovi
+});
+
+// So‘rov yuborilganini loglash uchun interceptors
+axiosInstance.interceptors.request.use((config) => {
+  console.log('Request was sent');
+  return config;
+});
+
+axiosInstance.interceptors.response.use(
+  (response) => {
+    // Javob muvaffaqiyatli bo‘lsa timeoutni o‘chirish kerak emas
+    return response;
+  },
+  async (error) => {
+    if (error.code === 'ECONNABORTED') {
+      console.log('Timeout yuz berdi, qayta yuborilyapti...');
+      // Timeout oshirib qayta urinish
+      return axiosInstance({
+        ...error.config,
+        timeout: 1000, // Qayta urinish uchun timeoutni oshiramiz
+      });
+    }
+    return Promise.reject(error); // Boshqa xatolarni qaytarish
+  }
+);
+
+// Asl POST so‘rovini yuborish
 const url = 'https://jsonplaceholder.typicode.com/posts';
 const data = {
   userId: 1,
   title: 'Any Title',
   description: 'Some Description',
 };
-const options = {
-  timeout: 100,
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json;charset=UTF-8',
-  },
-};
 
-// Javob interceptor'ini yaratish
-axios.interceptors.response.use(
-  (response) => {
-    // Muvaffaqiyatli javob qaytsa uni qaytaradi
-    return response;
-  },
-  (error) => {
-    // Agar status 0 bo'lsa, bu timeout bo'lishi mumkin
-    if (error.code === 'ECONNABORTED' || error.response?.status === 0) {
-      console.log('Timeout yuz berdi, qayta yuborilyapti...');
-      // Timeoutni 1000 qilib so'rovni qayta yuboramiz
-      const newConfig = {
-        ...error.config, // eski konfiguratsiyani olamiz
-        timeout: 1000,   // timeoutni oshiramiz
-      };
-      return axios(newConfig); // so'rovni qayta yuborish
-    }
-    // Agar boshqa turdagi xatolik bo'lsa, uni qaytaradi
-    return Promise.reject(error);
-  }
-);
-
-// Asl POST so'rovni yuborish
-axios
-  .post(url, data, options)
+axiosInstance
+  .post(url, data)
   .then((response) => {
-    console.log(response);
+    console.log('Muvaffaqiyatli javob:', response.data);
   })
   .catch((err) => {
     console.log('Xato:', err.message);
   });
+ 
 ```
 
 Bu yerda `axios.interceptors.request.use()` metodi HTTP so'rov yuborilishidan oldin bajarilishi kerak bo‘lgan kodni aniqlaydi. Shuningdek, `axios.interceptors.response.use()` yordamida serverdan keladigan javobni intercept qilish mumkin. Masalan, tarmoqda xatolik yuz bersa, bu orqali so‘rovni qayta urinish mumkin.
@@ -327,6 +329,75 @@ fetch('https://api.github.com/orgs/axios')
 Bu kodda biz `fetch()` metodini o‘zgartirib, har bir so‘rov oldidan `"Request was sent"` logini chiqarib turamiz. Bu kod `fetch()` metodini qayta belgilab, barcha HTTP so‘rovlar uchun bir xil xatti-harakatni ta'minlaydi. 
 
 Bu usul to'liq interceptor kabi ishlamasa-da, har bir `fetch()` so'rovini kuzatish va loglash imkonini beradi.
+
+Yana bir mosol: Keling, ikkala kodni birlashtirib, `fetch` uchun `timeout` va loglash mexanizmlarini qo‘shamiz. Bu yerda `fetch` so‘rovi boshlanishida loglash (`Request was sent`) ishlaydi, `timeout` orqali so‘rovni to‘xtatish imkoniyati ham mavjud bo‘ladi, va agar `timeout` tugasa, so‘rov qayta yuboriladi.
+
+Mana yakuniy kod:
+```javascript
+// fetch'ni loglash va timeout bilan kengaytirish
+const fetchWithLoggingAndTimeout = ((originalFetch) => {
+  return (url, options = {}, timeout = 100) => {
+    console.log('Request was sent'); // So‘rov yuborilganini loglash
+
+    // AbortController yaratish
+    const controller = new AbortController();
+    const { signal } = controller;
+    options.signal = signal; // signalni options ichiga qo‘shamiz
+
+    // Timeout vaqtini belgilash
+    const timer = setTimeout(() => {
+      controller.abort(); // Timeout vaqti tugsа, so‘rovni to‘xtatadi
+    }, timeout);
+
+    return originalFetch(url, options)
+      .then((response) => {
+        clearTimeout(timer); // Javob olinsa, timeoutni to‘xtatamiz
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        return response.json();
+      })
+      .catch((error) => {
+        clearTimeout(timer); // Xatolik bo‘lsa ham timeoutni to‘xtatamiz
+        if (error.name === 'AbortError') {
+          console.log('Timeout yuz berdi, qayta yuborilyapti...');
+          // Qayta urinish uchun timeoutni oshirib fetch'ni qayta chaqiramiz
+          return fetchWithLoggingAndTimeout(url, options, 1000);
+        }
+        throw error; // Boshqa xatolarni qaytarish
+      });
+  };
+})(fetch);
+
+// Asl POST so‘rovini yuborish
+const url = 'https://jsonplaceholder.typicode.com/posts';
+const data = {
+  userId: 1,
+  title: 'Any Title',
+  description: 'Some Description',
+};
+const options = {
+  method: 'POST',
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json;charset=UTF-8',
+  },
+  body: JSON.stringify(data),
+};
+
+fetchWithLoggingAndTimeout(url, options)
+  .then((data) => {
+    console.log('Muvaffaqiyatli javob:', data);
+  })
+  .catch((err) => {
+    console.log('Xato:', err.message);
+  });
+```
+_**Tushuntirish**_
+1. **Loglash**: `fetchWithLoggingAndTimeout` funksiyasida har bir so‘rov yuborilishida `console.log('Request was sent');` orqali log chiqariladi.
+2. **AbortController bilan timeout**: `AbortController` yordamida `timeout`ni o‘rnatamiz. Agar `timeout` muddati tugasa, `controller.abort()` chaqiriladi va so‘rov to‘xtatiladi.
+3. **Timeoutdagi qayta urinish**: Agar `timeout` sababli so‘rov muvaffaqiyatsiz yakunlansa (`AbortError` xatosi), `console.log('Timeout yuz berdi, qayta yuborilyapti...');` orqali log chiqarilib, `timeout` qiymatini 1000 qilib so‘rov qayta yuboriladi.
+4. **Xatolikni boshqarish**: `timeout` bilan bog‘liq bo‘lmagan boshqa xatolar oddiy `throw error;` orqali qaytariladi.
+
+Bu kodda so‘rov yuborilishida log chiqadi, agar so‘rov kechiksa, u `timeout` bilan to‘xtatiladi va yangi `timeout` qiymati bilan qayta yuboriladi.
 
 ### Yuklash jarayonini kuzatish
 
