@@ -429,7 +429,6 @@ export default memo(function TestFetch() {
         }
         // Agar 'ReadableStream' qo'llab-quvvatlanmasa, xatolik tashlanadi
         if (!response.body) {
-// **ReadableStream**
           throw Error('ReadableStream not yet supported in this browser.');
         }
         // Javob hajmini olish uchun `content-length` sarlavhasi tekshiriladi
@@ -441,6 +440,7 @@ export default memo(function TestFetch() {
         let loaded = 0; // Yuklangan hajmni kuzatish uchun o'zgaruvchi
 
         return new Response(
+// **ReadableStream**
           new ReadableStream({
             start(controller) {
               const reader = response.body.getReader();
